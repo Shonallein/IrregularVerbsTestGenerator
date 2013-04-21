@@ -18,11 +18,15 @@ import sys
 import random
 from sets import Set
 from PySide.QtGui import QMainWindow, QApplication, QStandardItemModel, \
-    QStandardItem, QItemSelectionModel, QMessageBox
+    QStandardItem, QItemSelectionModel, QMessageBox, QTextCursor,  \
+    QTextTableFormat
+from PySide.QtCore import Qt
 from ui_irregularverbstestgenerator import Ui_IrregularVerbsTestGenerator
 from xlrd import open_workbook
 from xlrd.book import Book
 from xlrd.sheet import Sheet
+from elementtree.SimpleXMLWriter import XMLWriter
+from StringIO import StringIO
 
 class Verb:
     def __init__(self, base_verbal, preterit, past_participle, translation):
@@ -81,8 +85,45 @@ def _generate_test(verbs, nb_lines, include_solutions):
         if include_solutions:
             test.solutions.append([verb[i] for i in range(len(verb)) if i != index])
     return test
-        
 
+
+def _add_row(row, w):
+    w.start(u"tr")
+    index = row[0]
+    verb = row[1]
+    for i in range(4):
+        if index == i:
+            w.element(u"td", verb)
+        else:
+            w.element(u"td", u"")
+    w.end(u"tr")
+
+def _test_to_html(test):
+    iodevice = StringIO()
+    w = XMLWriter(iodevice, "utf-8")
+    w.start(u"html")
+    w.start(u"body")
+    w.start(u"table", border="1")
+    w.start(u"tr")
+    w.element(u"th", u"Base verbale")
+    w.element(u"th", u"Preterit")
+    w.element(u"th", u"Participe passé")
+    w.element(u"th", u"Traduction")
+    w.element(u"th", u"Points")
+    w.end(u"tr")
+    for entry in test.array:
+        _add_row(entry, w)
+    w.end(u"table")
+    w.end(u"body")
+    w.end(u"html")
+
+    html_str = iodevice.getvalue()
+    f = open("test.html", "w")
+    f.write(html_str)
+    f.close()
+    iodevice.close()
+    return html_str
+    
 class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -123,6 +164,7 @@ class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
         if nb_lines > len(index_list):
             QMessageBox.warning(self, self.tr("IrregularVerbsTestGenerator"),
                                 self.tr("You haven't selected enought verbs to generate a test with {0} lines !".format(nb_lines)))
+            return
         level_name = self.mClassList.itemData(self.mClassList.currentIndex())
         level = self.levels_dict[level_name]
         verbs = []
@@ -130,6 +172,11 @@ class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
             verbs.append(level.verbs_dict[index.data()])
         include_solutions = self.mIncludeSolutions.isChecked()
         test = _generate_test(verbs, nb_lines, include_solutions)
+
+        document = self.mTestPreview.document()
+        document.clear()
+        html = _test_to_html(test)
+        document.setHtml(html)
         
 
 if __name__ == '__main__':
