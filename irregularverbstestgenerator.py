@@ -16,15 +16,15 @@ __status__ = "Prototype"
 
 import sys
 import random
+import os
 from sets import Set
 from PySide.QtGui import QMainWindow, QApplication, QStandardItemModel, \
     QStandardItem, QItemSelectionModel, QMessageBox, QTextCursor,  \
-    QTextTableFormat
+    QTextTableFormat, QFileDialog, QDesktopServices
 from PySide.QtCore import Qt
 from ui_irregularverbstestgenerator import Ui_IrregularVerbsTestGenerator
-from xlrd import open_workbook
-from xlrd.book import Book
-from xlrd.sheet import Sheet
+import xlrd
+import xlwt 
 from elementtree.SimpleXMLWriter import XMLWriter
 from StringIO import StringIO
 
@@ -123,14 +123,114 @@ def _test_to_html(test):
     f.close()
     iodevice.close()
     return html_str
+
+def _get_cell_format_information(workbook, sheet, row_index):
+    format_index = sheet.cell_xf_index(row_index,0)
+    format = workbook.xf_list[format_index]
+    font = workbook.font_list[format.font_index]
+    return format, font
+
+def _r_font_to_w_font(r_font):
+    w_font = xlwt.Font()
+    w_font.height = r_font.height
+    w_font.bold = r_font.weight == 700
+    w_font.italic = r_font.italic
+    w_font.colour_index = r_font.colour_index
+    w_font.escapement = r_font.escapement
+    w_font.family = r_font.family
+    w_font.name = r_font.name
+    w_font.outline = r_font.outline
+    w_font.shadow = r_font.shadow
+    w_font.struck_out = r_font.struck_out
+    w_font.underlined = r_font.underline_type
+
+    return w_font
+
+def _r_alignment_to_w_alignment(r_alignment):
+    w_alignment = xlwt.Alignment()
+    w_alignment.horz = r_alignment.hor_align
+    w_alignment.vert = r_alignment.vert_align
+    w_alignment.dire = r_alignment.text_direction
+    w_alignment.rota = r_alignment.rotation
+    w_alignment.wrap = r_alignment.text_wrapped
+    w_alignment.shri = r_alignment.shrink_to_fit
+    w_alignment.inde = r_alignment.indent_level
     
+    return w_alignment
+
+def _r_borders_to_w_borders(r_borders):
+    w_borders = xlwt.Borders()
+    w_borders.left = r_borders.left_line_style
+    w_borders.left_colour = r_borders.left_colour_index
+    w_borders.right = r_borders.right_line_style
+    w_borders.right_colour = r_borders.right_colour_index
+    w_borders.top = r_borders.top_line_style
+    w_borders.top_colour = r_borders.top_colour_index
+    w_borders.bottom = r_borders.bottom_line_style
+    w_borders.bottom_colour = r_borders.bottom_colour_index
+
+    return w_borders
+
+def _r_format_to_w_format(r_format, r_font):
+    w_style = xlwt.XFStyle()
+    w_style.font = _r_font_to_w_font(r_font)
+    w_style.alignment = _r_alignment_to_w_alignment(r_format.alignment)
+    w_style.borders = _r_borders_to_w_borders(r_format.border)
+    return w_style
+
+def _get_string_width(font, string):
+    height = (font.height*1.0/1440.0)/0.05*96
+    return int(round(len(string)*height))
+
+def _export_test_to_xls_file(test, filepath):
+
+    # Open format workbook
+    f_workbook = xlrd.open_workbook('format.xls', formatting_info=True)
+    f_sheet = f_workbook.sheet_by_index(0)
+
+    # Open destination workbook
+    wb = xlwt.Workbook(encoding='utf-8')
+    sheet = wb.add_sheet(u"Test")
+
+    # Write header
+    title_r_format, title_r_font = _get_cell_format_information(f_workbook, f_sheet, 0)
+    title_w_style = _r_format_to_w_format(title_r_format, title_r_font)
+    content_r_format, content_r_font = _get_cell_format_information(f_workbook, f_sheet, 1)
+    content_w_style = _r_format_to_w_format(content_r_format, content_r_font)
+    max_height = max(_get_string_width(title_w_style.font, 'w'), 
+                     _get_string_width(content_w_style.font, 'w'))
+
+    max_width = len(u"Participe passé") * max_height
+    sheet.write(0, 0, u"Base verbale", title_w_style)
+    sheet.write(0, 1, u"Preterit", title_w_style)
+    sheet.write(0, 2, u"Participe passé", title_w_style)
+    sheet.write(0, 3, u"Traduction", title_w_style)
+    sheet.write(0, 4, u"Points", title_w_style)
+    sheet.row(0).height = max_height
+
+    # Write test content
+    for i in range(len(test.array)):
+        for j in range(5):
+            if j == test.array[i][0]:
+                sheet.write(i+1, test.array[i][0], test.array[i][1], content_w_style)
+                max_width = max(max_width, len(test.array[i][1]))
+            else:
+                sheet.write(i+1, j, '', content_w_style)
+            sheet.row(i+1).height = max_height
+
+    for i in range(5):
+        sheet.col(i).width = max_width
+    
+    wb.save(filepath)
+
 class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
+        self.test = Test()
 
         # Load verbs informations
-        workbook = open_workbook('irv.xls')
+        workbook = xlrd.open_workbook('irv.xls')
         self.levels_list = []
         self.levels_dict = {}
         for sheet in workbook.sheets():
@@ -146,6 +246,7 @@ class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
         for level in self.levels_list:
             self.mClassList.addItem(level, level)
         self.mGenerate.clicked.connect(self._on_generate)
+        self.mActionSave.triggered.connect(self._on_export)
         
     def _on_level_selected_changed(self, index):
         level_name = self.mClassList.itemData(index)
@@ -171,12 +272,31 @@ class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
         for index in index_list:
             verbs.append(level.verbs_dict[index.data()])
         include_solutions = self.mIncludeSolutions.isChecked()
-        test = _generate_test(verbs, nb_lines, include_solutions)
+        self.test = _generate_test(verbs, nb_lines, include_solutions)
 
         document = self.mTestPreview.document()
         document.clear()
-        html = _test_to_html(test)
+        html = _test_to_html(self.test)
         document.setHtml(html)
+
+    def _on_export(self):
+        if len(self.test.array) == 0:
+            QMessageBox.warning(self, self.tr("IrregularVerbsTestGenerator"),
+                                self.tr("You need to generate a test first !"))
+            return
+
+        export_file, export_format = QFileDialog.getSaveFileName(
+            self, 
+            self.tr("Save test"),
+            QDesktopServices.storageLocation(QDesktopServices.DesktopLocation),
+            self.tr("Xls file (*.xls)"))
+        
+        if not export_file:
+            return
+
+        export_file = "{0}.xls".format(os.path.splitext(export_file)[0])
+        _export_test_to_xls_file(self.test, export_file)
+        
         
 
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'irregularverbstestgenerator.ui'
+# Form implementation generated from reading ui file '/home/shona/Dev/src/IrregularVerbsTestGenerator-python/irregularverbstestgenerator.ui'
 #
-# Created: Fri Apr 19 19:56:39 2013
+# Created: Sun Apr 21 18:16:08 2013
 #      by: pyside-uic 0.2.13 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ class Ui_IrregularVerbsTestGenerator(object):
         self.horizontalLayout_3.addWidget(self.mTestPreview)
         IrregularVerbsTestGenerator.setCentralWidget(self.centralWidget)
         self.menuBar = QtGui.QMenuBar(IrregularVerbsTestGenerator)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 834, 21))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 834, 23))
         self.menuBar.setObjectName("menuBar")
         self.menuFile = QtGui.QMenu(self.menuBar)
         self.menuFile.setObjectName("menuFile")
@@ -79,12 +79,16 @@ class Ui_IrregularVerbsTestGenerator(object):
         self.verticalLayout.addWidget(self.mGenerate)
         self.dockWidget.setWidget(self.dockWidgetContents)
         IrregularVerbsTestGenerator.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.dockWidget)
-        self.actionTodo = QtGui.QAction(IrregularVerbsTestGenerator)
-        self.actionTodo.setObjectName("actionTodo")
-        self.menuFile.addAction(self.actionTodo)
+        self.mActionSave = QtGui.QAction(IrregularVerbsTestGenerator)
+        self.mActionSave.setObjectName("mActionSave")
+        self.mActionQuit = QtGui.QAction(IrregularVerbsTestGenerator)
+        self.mActionQuit.setObjectName("mActionQuit")
+        self.menuFile.addAction(self.mActionSave)
+        self.menuFile.addAction(self.mActionQuit)
         self.menuBar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(IrregularVerbsTestGenerator)
+        QtCore.QObject.connect(self.mActionQuit, QtCore.SIGNAL("triggered()"), IrregularVerbsTestGenerator.close)
         QtCore.QMetaObject.connectSlotsByName(IrregularVerbsTestGenerator)
 
     def retranslateUi(self, IrregularVerbsTestGenerator):
@@ -92,13 +96,16 @@ class Ui_IrregularVerbsTestGenerator(object):
         self.mTestPreview.setHtml(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+"</style></head><body style=\" font-family:\'Helvetica\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\'; font-size:8pt;\"><br /></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.menuFile.setTitle(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "File", None, QtGui.QApplication.UnicodeUTF8))
         self.dockWidget.setWindowTitle(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Test parameters", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Class", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Nb lines", None, QtGui.QApplication.UnicodeUTF8))
         self.mIncludeSolutions.setText(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Include solutions", None, QtGui.QApplication.UnicodeUTF8))
         self.mGenerate.setText(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Generate", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionTodo.setText(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Todo", None, QtGui.QApplication.UnicodeUTF8))
+        self.mActionSave.setText(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Save", None, QtGui.QApplication.UnicodeUTF8))
+        self.mActionSave.setShortcut(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Ctrl+S", None, QtGui.QApplication.UnicodeUTF8))
+        self.mActionQuit.setText(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Quit", None, QtGui.QApplication.UnicodeUTF8))
+        self.mActionQuit.setShortcut(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Ctrl+Q", None, QtGui.QApplication.UnicodeUTF8))
 
