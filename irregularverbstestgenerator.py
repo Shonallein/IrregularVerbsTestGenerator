@@ -83,7 +83,8 @@ def _generate_test(verbs, nb_lines, include_solutions):
         index = custom_random.next()
         test.array.append((index, verb[index]))
         if include_solutions:
-            test.solutions.append([verb[i] for i in range(len(verb)) if i != index])
+            test.solutions.extend([verb[i] for i in range(len(verb)) if i != index])
+    random.shuffle(test.solutions)
     return test
 
 
@@ -118,9 +119,9 @@ def _test_to_html(test):
     w.end(u"html")
 
     html_str = iodevice.getvalue()
-    f = open("test.html", "w")
-    f.write(html_str)
-    f.close()
+    #f = open("test.html", "w")
+    #f.write(html_str)
+    #f.close()
     iodevice.close()
     return html_str
 
@@ -179,7 +180,7 @@ def _r_format_to_w_format(r_format, r_font):
     return w_style
 
 def _get_string_width(font, string):
-    height = (font.height*1.0/1440.0)/0.05*96
+    height = (font.height*1.0/1440.0)/0.05*96*0.8
     return int(round(len(string)*height))
 
 def _export_test_to_xls_file(test, filepath):
@@ -197,30 +198,47 @@ def _export_test_to_xls_file(test, filepath):
     title_w_style = _r_format_to_w_format(title_r_format, title_r_font)
     content_r_format, content_r_font = _get_cell_format_information(f_workbook, f_sheet, 1)
     content_w_style = _r_format_to_w_format(content_r_format, content_r_font)
-    max_height = max(_get_string_width(title_w_style.font, 'w'), 
+    solution_r_format, solution_r_font = _get_cell_format_information(f_workbook, f_sheet, 2)
+    solution_w_style = _r_format_to_w_format(solution_r_format, solution_r_font)
+    max_cell_height = max(_get_string_width(title_w_style.font, 'w'), 
                      _get_string_width(content_w_style.font, 'w'))
 
-    max_width = len(u"Participe passé") * max_height
+    max_cell_width = len(u"Participe passé") * max_cell_height
     sheet.write(0, 0, u"Base verbale", title_w_style)
     sheet.write(0, 1, u"Preterit", title_w_style)
     sheet.write(0, 2, u"Participe passé", title_w_style)
     sheet.write(0, 3, u"Traduction", title_w_style)
     sheet.write(0, 4, u"Points", title_w_style)
-    sheet.row(0).height = max_height
+    sheet.row(0).height = max_cell_height
 
     # Write test content
     for i in range(len(test.array)):
         for j in range(5):
             if j == test.array[i][0]:
                 sheet.write(i+1, test.array[i][0], test.array[i][1], content_w_style)
-                max_width = max(max_width, len(test.array[i][1]))
+                max_cell_width = max(max_cell_width, len(test.array[i][1]))
             else:
                 sheet.write(i+1, j, '', content_w_style)
-            sheet.row(i+1).height = max_height
-
+            sheet.row(i+1).height = max_cell_height
+    # Resize columns
     for i in range(5):
-        sheet.col(i).width = max_width
+        sheet.col(i).width = max_cell_width
     
+    # Write solutions
+    solution_lines = []
+    max_line_width = max_cell_width * 5
+    for solution in test.solutions:
+        width = _get_string_width(solution_w_style.font, " / "+solution)
+        if len(solution_lines) == 0 or (_get_string_width(solution_w_style.font, solution_lines[-1])+width) > max_line_width:
+            solution_lines.append(solution)
+        else:
+            solution_lines[-1] += " / "+solution
+
+    current_row = len(test.array)+2
+    for line in solution_lines:
+        sheet.write_merge(current_row, current_row, 0, 4, line, solution_w_style)
+        current_row+=1
+
     wb.save(filepath)
 
 class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
