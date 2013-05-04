@@ -180,7 +180,7 @@ def _r_format_to_w_format(r_format, r_font):
     return w_style
 
 def _get_string_width(font, string):
-    height = (font.height*1.0/1440.0)/0.05*96*0.8
+    height = (font.height*1.0/1440.0)/0.05*96
     return int(round(len(string)*height))
 
 def _export_test_to_xls_file(test, filepath):
@@ -216,12 +216,12 @@ def _export_test_to_xls_file(test, filepath):
         for j in range(5):
             if j == test.array[i][0]:
                 sheet.write(i+1, test.array[i][0], test.array[i][1], content_w_style)
-                max_cell_width = max(max_cell_width, len(test.array[i][1]))
+                max_cell_width = max(max_cell_width, len(test.array[i][1])*max_cell_height)
             else:
                 sheet.write(i+1, j, '', content_w_style)
             sheet.row(i+1).height = max_cell_height
     # Resize columns
-    for i in range(5):
+    for i in range(4):
         sheet.col(i).width = max_cell_width
     
     # Write solutions
