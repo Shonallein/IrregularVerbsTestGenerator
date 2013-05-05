@@ -16,6 +16,7 @@ __status__ = "Prototype"
 
 import sys
 import random
+import codecs
 import os
 from sets import Set
 from PySide.QtGui import QMainWindow, QApplication, QStandardItemModel, \
@@ -104,7 +105,7 @@ def _test_to_html(test):
     w = XMLWriter(iodevice, "utf-8")
     w.start(u"html")
     w.start(u"body")
-    w.start(u"table", border="1")
+    w.start(u"table", border=u"1")
     w.start(u"tr")
     w.element(u"th", u"Base verbale")
     w.element(u"th", u"Preterit")
@@ -118,10 +119,7 @@ def _test_to_html(test):
     w.end(u"body")
     w.end(u"html")
 
-    html_str = iodevice.getvalue()
-    #f = open("test.html", "w")
-    #f.write(html_str)
-    #f.close()
+    html_str = unicode(iodevice.getvalue(), encoding='utf-8')
     iodevice.close()
     return html_str
 
