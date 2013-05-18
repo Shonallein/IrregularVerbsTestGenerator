@@ -2,3 +2,4 @@
 *.pyc
 *.xls
 *.exe
+build_win32

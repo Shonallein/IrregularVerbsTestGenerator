@@ -22,7 +22,7 @@ from sets import Set
 from PySide.QtGui import QMainWindow, QApplication, QStandardItemModel, \
     QStandardItem, QItemSelectionModel, QMessageBox, QTextCursor,  \
     QTextTableFormat, QFileDialog, QDesktopServices
-from PySide.QtCore import Qt
+from PySide.QtCore import Qt, QUrl
 from ui_irregularverbstestgenerator import Ui_IrregularVerbsTestGenerator
 import xlrd
 import xlwt 
@@ -263,6 +263,8 @@ class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
             self.mClassList.addItem(level, level)
         self.mGenerate.clicked.connect(self._on_generate)
         self.mActionSave.triggered.connect(self._on_export)
+        self.mActionEditVerbsList.triggered.connect(self._on_edit_verbs_list)
+        self.mActionEditExportStyle.triggered.connect(self._on_edit_export_style)
         
     def _on_level_selected_changed(self, index):
         level_name = self.mClassList.itemData(index)
@@ -312,6 +314,16 @@ class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
 
         export_file = "{0}.xls".format(os.path.splitext(export_file)[0])
         _export_test_to_xls_file(self.test, export_file)
+
+    def _on_edit_verbs_list(self):
+        QDesktopServices.openUrl(
+            QUrl.fromLocalFile(
+                os.path.join(QApplication.applicationDirPath(), "irv.xls")))
+
+    def _on_edit_export_style(self):
+        QDesktopServices.openUrl(
+            QUrl.fromLocalFile(
+                os.path.join(QApplication.applicationDirPath(), "format.xls")))
         
         
 
