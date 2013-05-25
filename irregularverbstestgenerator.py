@@ -18,6 +18,7 @@ import sys
 import random
 import codecs
 import os
+import shutil
 from sets import Set
 from PySide.QtGui import QMainWindow, QApplication, QStandardItemModel, \
     QStandardItem, QItemSelectionModel, QMessageBox, QTextCursor,  \
@@ -28,6 +29,9 @@ import xlrd
 import xlwt 
 from elementtree.SimpleXMLWriter import XMLWriter
 from StringIO import StringIO
+
+VERBS_FILE = 'irv.xls'
+FORMAT_FILE = 'format.xls'
 
 class Verb:
     def __init__(self, base_verbal, preterit, past_participle, translation):
@@ -75,7 +79,7 @@ class Test:
 
         return _str
 
-def _generate_test(verbs, nb_lines, include_solutions):
+def _generate_test(verbs, nb_lines):
     random.shuffle(verbs)
     custom_random = CustomRandom()
     test = Test()
@@ -83,8 +87,7 @@ def _generate_test(verbs, nb_lines, include_solutions):
         verb = verbs[i].array()
         index = custom_random.next()
         test.array.append((index, verb[index]))
-        if include_solutions:
-            test.solutions.extend([verb[i] for i in range(len(verb)) if i != index])
+        test.solutions.extend([verb[i] for i in range(len(verb)) if i != index])
     random.shuffle(test.solutions)
     return test
 
@@ -181,10 +184,13 @@ def _get_string_width(font, string):
     height = (font.height*1.0/1440.0)/0.05*96
     return int(round(len(string)*height))
 
-def _export_test_to_xls_file(test, filepath):
+def _export_test_to_xls_file(test, filepath, include_solutions):
 
     # Open format workbook
-    f_workbook = xlrd.open_workbook('format.xls', formatting_info=True)
+    format_file_path = os.path.join(
+        QDesktopServices.storageLocation(QDesktopServices.DataLocation), 
+        FORMAT_FILE)
+    f_workbook = xlrd.open_workbook(format_file_path, formatting_info=True)
     f_sheet = f_workbook.sheet_by_index(0)
 
     # Open destination workbook
@@ -223,19 +229,20 @@ def _export_test_to_xls_file(test, filepath):
         sheet.col(i).width = max_cell_width
     
     # Write solutions
-    solution_lines = []
-    max_line_width = max_cell_width * 5
-    for solution in test.solutions:
-        width = _get_string_width(solution_w_style.font, " / "+solution)
-        if len(solution_lines) == 0 or (_get_string_width(solution_w_style.font, solution_lines[-1])+width) > max_line_width:
-            solution_lines.append(solution)
-        else:
-            solution_lines[-1] += " / "+solution
+    if include_solutions:
+        solution_lines = []
+        max_line_width = max_cell_width * 5
+        for solution in test.solutions:
+            width = _get_string_width(solution_w_style.font, " / "+solution)
+            if len(solution_lines) == 0 or (_get_string_width(solution_w_style.font, solution_lines[-1])+width) > max_line_width:
+                solution_lines.append(solution)
+            else:
+                solution_lines[-1] += " / "+solution
 
-    current_row = len(test.array)+2
-    for line in solution_lines:
-        sheet.write_merge(current_row, current_row, 0, 4, line, solution_w_style)
-        current_row+=1
+        current_row = len(test.array)+2
+        for line in solution_lines:
+            sheet.write_merge(current_row, current_row, 0, 4, line, solution_w_style)
+            current_row+=1
 
     wb.save(filepath)
 
@@ -245,8 +252,22 @@ class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
         self.setupUi(self)
         self.test = Test()
 
+        # Copy the default irv file into app data directory if necessary
+        data_path = QDesktopServices.storageLocation(QDesktopServices.DataLocation)
+        if not os.path.exists(data_path):
+            os.makedirs(data_path)
+        verbs_file_path = os.path.join(data_path, VERBS_FILE)
+        if not os.path.exists(verbs_file_path):
+            shutil.copy(os.path.join(QApplication.applicationDirPath(), VERBS_FILE), 
+                        verbs_file_path)
+
+        format_file_path = os.path.join(data_path, FORMAT_FILE)
+        if not os.path.exists(format_file_path):
+            shutil.copy(os.path.join(QApplication.applicationDirPath(), FORMAT_FILE), 
+                        format_file_path)
+
         # Load verbs informations
-        workbook = xlrd.open_workbook('irv.xls')
+        workbook = xlrd.open_workbook(verbs_file_path)
         self.levels_list = []
         self.levels_dict = {}
         for sheet in workbook.sheets():
@@ -262,7 +283,8 @@ class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
         for level in self.levels_list:
             self.mClassList.addItem(level, level)
         self.mGenerate.clicked.connect(self._on_generate)
-        self.mActionSave.triggered.connect(self._on_export)
+        self.mExport.clicked.connect(self._on_export)
+        self.mActionExport.triggered.connect(self._on_export)
         self.mActionEditVerbsList.triggered.connect(self._on_edit_verbs_list)
         self.mActionEditExportStyle.triggered.connect(self._on_edit_export_style)
         
@@ -289,8 +311,7 @@ class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
         verbs = []
         for index in index_list:
             verbs.append(level.verbs_dict[index.data()])
-        include_solutions = self.mIncludeSolutions.isChecked()
-        self.test = _generate_test(verbs, nb_lines, include_solutions)
+        self.test = _generate_test(verbs, nb_lines)
 
         document = self.mTestPreview.document()
         document.clear()
@@ -312,23 +333,28 @@ class MainWindow(QMainWindow, Ui_IrregularVerbsTestGenerator):
         if not export_file:
             return
 
+        include_solutions = self.mIncludeSolutions.isChecked()
         export_file = "{0}.xls".format(os.path.splitext(export_file)[0])
-        _export_test_to_xls_file(self.test, export_file)
+        _export_test_to_xls_file(self.test, export_file, include_solutions)
 
     def _on_edit_verbs_list(self):
-        QDesktopServices.openUrl(
-            QUrl.fromLocalFile(
-                os.path.join(QApplication.applicationDirPath(), "irv.xls")))
+        file_path = os.path.join(
+            QDesktopServices.storageLocation(QDesktopServices.DataLocation), 
+            VERBS_FILE)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(file_path))
 
     def _on_edit_export_style(self):
-        QDesktopServices.openUrl(
-            QUrl.fromLocalFile(
-                os.path.join(QApplication.applicationDirPath(), "format.xls")))
+        file_path = os.path.join(
+            QDesktopServices.storageLocation(QDesktopServices.DataLocation), 
+            FORMAT_FILE)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(file_path))
         
         
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setOrganizationName("TeacherTools")
+    app.setApplicationName("IrregularVerbsTestGenerator")
     frame = MainWindow()
     frame.show()    
     app.exec_()
