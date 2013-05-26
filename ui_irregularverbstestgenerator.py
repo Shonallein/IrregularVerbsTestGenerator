@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'C:\Users\Shona\dev\IrregularVerbsTestGenerator\irregularverbstestgenerator.ui'
 #
-# Created: Sat May 25 10:59:04 2013
+# Created: Sun May 26 16:39:59 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -131,7 +131,7 @@ class Ui_IrregularVerbsTestGenerator(object):
         self.menuEdit.setTitle(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Edit", None, QtGui.QApplication.UnicodeUTF8))
         self.dockWidget.setWindowTitle(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Test parameters", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox.setTitle(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Generation options", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Class", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Level", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Nb lines", None, QtGui.QApplication.UnicodeUTF8))
         self.mGenerate.setText(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Generate", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox_2.setTitle(QtGui.QApplication.translate("IrregularVerbsTestGenerator", "Export options", None, QtGui.QApplication.UnicodeUTF8))

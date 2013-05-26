@@ -108,17 +108,32 @@ def _test_to_html(test):
     w = XMLWriter(iodevice, "utf-8")
     w.start(u"html")
     w.start(u"body")
+    w.start(u"div")
     w.start(u"table", border=u"1")
     w.start(u"tr")
     w.element(u"th", u"Base verbale")
     w.element(u"th", u"Preterit")
     w.element(u"th", u"Participe passé")
     w.element(u"th", u"Traduction")
-    w.element(u"th", u"Points")
+    #w.element(u"th", u"Points")
     w.end(u"tr")
     for entry in test.array:
         _add_row(entry, w)
     w.end(u"table")
+    w.end(u"div")
+    solution_lines = []
+    current_line_nb_solution = 0
+    for solution in test.solutions:
+        if len(solution_lines) == 0 or current_line_nb_solution >= 10:
+            solution_lines.append(solution)
+            current_line_nb_solution = 0
+        else:
+            solution_lines[-1] += " / "+solution
+            current_line_nb_solution += 1
+    w.element(u"br", u"")
+    w.element(u"div", u"Solutions:")
+    for line in solution_lines:
+        w.element(u"div", line)
     w.end(u"body")
     w.end(u"html")
 

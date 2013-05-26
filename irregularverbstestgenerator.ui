@@ -95,7 +95,7 @@ p, li { white-space: pre-wrap; }
           <item>
            <widget class="QLabel" name="label">
             <property name="text">
-             <string>Class</string>
+             <string>Level</string>
             </property>
            </widget>
           </item>
